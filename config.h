@@ -9,13 +9,13 @@ static const unsigned int gappx     = 6;        /* gaps between windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
-static const char *fonts[]          = { "JetBrainsMonoNL Nerd:size=12" };
-static const char dmenufont[]       = "JetBrainsMonoNL Nerd:size=12";
-static const char col_gray1[]       = "#222222";
+static const char *fonts[]          = { "JetBrainsMonoNL Nerd Font:size=12" };
+static const char dmenufont[]       = "JetBrainsMonoNL Nerd Font:size=12";
+static const char col_gray1[]       = "#3c3836";
 static const char col_gray2[]       = "#444444";
 static const char col_gray3[]       = "#bbbbbb";
 static const char col_gray4[]       = "#eeeeee";
-static const char col_cyan[]        = "#005577";
+static const char col_cyan[]        = "#458588";
 static const char *colors[][3]      = {
 	/*               fg         bg         border   */
 	[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
@@ -23,7 +23,9 @@ static const char *colors[][3]      = {
 };
 
 static const char *const autostart[] = {
-	"st", NULL,
+	"picom", "-b", NULL,
+	"sh", "-c", "/home/myschkin/.fehbg", NULL,
+	"dwmblocks", NULL,
 	NULL /* terminate */
 };
 
@@ -64,9 +66,9 @@ static const Layout layouts[] = {
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 /* Volume controls definition */
-static const char *upvol[]      = { "/usr/bin/wpctl",   "set-volume", "58",      "5%+",      NULL };
-static const char *downvol[]    = { "/usr/bin/wpctl",   "set-volume", "58",      "5%-",      NULL };
-static const char *mutevol[]    = { "/usr/bin/wpctl",   "set-mute",   "58",      "toggle",   NULL };
+static const char *upvol[]      = { "/usr/bin/wpctl",   "set-volume", "53",      "5%+",      NULL };
+static const char *downvol[]    = { "/usr/bin/wpctl",   "set-volume", "53",      "5%-",      NULL };
+static const char *mutevol[]    = { "/usr/bin/wpctl",   "set-mute",   "53",      "toggle",   NULL };
 
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
 /* commands */
@@ -99,6 +101,10 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_period, focusmon,       {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_comma,  tagmon,         {.i = -1 } },
 	{ MODKEY|ShiftMask,             XK_period, tagmon,         {.i = +1 } },
+    { MODKEY|ShiftMask,             XK_q,      quit,           {0} },
+	{ 0,              XF86XK_AudioLowerVolume, spawn,     {.v = downvol } },
+	{ 0,              XF86XK_AudioMute,        spawn,     {.v = mutevol } },
+	{ 0,              XF86XK_AudioRaiseVolume, spawn,     {.v = upvol   } },
 	TAGKEYS(                        XK_1,                      0)
 	TAGKEYS(                        XK_2,                      1)
 	TAGKEYS(                        XK_3,                      2)
@@ -108,11 +114,7 @@ static const Key keys[] = {
 	TAGKEYS(                        XK_7,                      6)
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
-	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
-	{ 0,                       XF86XK_AudioLowerVolume, spawn, {.v = downvol } },
-	{ 0,                       XF86XK_AudioMute, spawn, {.v = mutevol } },
-	{ 0,                       XF86XK_AudioRaiseVolume, spawn, {.v = upvol   } },
-};
+	};
 
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
