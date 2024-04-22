@@ -3,18 +3,23 @@
 #include <X11/XF86keysym.h>
 
 /* appearance */
-static const unsigned int borderpx = 5; /* border pixel of windows */
-static const unsigned int gappx = 6;    /* gaps between windows */
-static const unsigned int snap = 32;    /* snap pixel */
-static const int showbar = 1;           /* 0 means no bar */
-static const int topbar = 1;            /* 0 means bottom bar */
+static const unsigned int borderpx = 3;     /* border pixel of windows */
+static const unsigned int gappx = 10;       /* gaps between windows */
+static const unsigned int snap = 32;        /* snap pixel */
+static const int showbar = 1;               /* 0 means no bar */
+static const int topbar = 1;                /* 0 means bottom bar */
+static const int usealtbar = 1;             /* 1 means use non-dwm status bar */
+static const char *altbarclass = "Polybar"; /* Alternate bar class name */
+static const char *alttrayname = "tray";    /* Polybar tray instance name */
+static const char *altbarcmd =
+    "$HOME/.config/polybar/launch.sh"; /* Alternate bar launch command */
 static const char *fonts[] = {"JetBrainsMonoNL Nerd Font:size=12"};
 static const char dmenufont[] = "JetBrainsMonoNL Nerd Font:size=12";
 static const char col_main[] = "#29251d";
-static const char col_cl_border[] = "#b1c8cf";
-static const char col_blocks_font[] = "#eeeeee";
-static const char col_tab_font[] = "#eeeeee";
-static const char col_selected[] = "#2f3774";
+static const char col_cl_border[] = "#303446";
+static const char col_blocks_font[] = "#c6d0f5";
+static const char col_tab_font[] = "#c6d0f5";
+static const char col_selected[] = "#ca9ee6";
 static const unsigned int baralpha = 0xC8;
 static const unsigned int borderalpha = OPAQUE;
 
@@ -25,9 +30,9 @@ static const char *colors[][3] = {
 };
 
 static const char *const autostart[] = {
-    "picom", "-b",        NULL, "sh",    "-c", "/home/myschkin/.fehbg",
-    NULL,    "dwmblocks", NULL, "dunst", NULL, "clipmenud",
-    NULL,    NULL /* terminate */
+    "picom",  "-b",        NULL, "sh",    "-c", "/home/myschkin/.fehbg",
+    NULL,     "nm-applet", NULL, "dunst", NULL, "greenclip",
+    "daemon", NULL,        NULL /* terminate */
 };
 
 static const unsigned int alphas[][3] = {
@@ -53,7 +58,7 @@ static const Rule rules[] = {
 static const float mfact = 0.55; /* factor of master area size [0.05..0.95] */
 static const int nmaster = 1;    /* number of clients in master area */
 static const int resizehints =
-    0; /* 1 means respect size hints in tiled resizals */
+    1; /* 1 means respect size hints in tiled resizals */
 static const int attachbelow =
     1; /* 1 means attach after the currently active window */
 static const int lockfullscreen =
@@ -85,6 +90,8 @@ static const Layout layouts[] = {
 static const char *upvol[] = {"vol_notifs.sh", "5%+", NULL};
 static const char *downvol[] = {"vol_notifs.sh", "5%-", NULL};
 static const char *mutevol[] = {"vol_notifs.sh", "0", NULL};
+static const char *upbright[] = {"bright_notifs.sh", "up", NULL};
+static const char *downbright[] = {"bright_notifs.sh", "down", NULL};
 
 #define SHCMD(cmd)                                                             \
   {                                                                            \
@@ -93,13 +100,17 @@ static const char *mutevol[] = {"vol_notifs.sh", "0", NULL};
 /* commands */
 static char dmenumon[2] =
     "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = {"dmenu_run", "-m", dmenumon, NULL};
-static const char *clipmenucmd[] = {"clipmenu", NULL};
-static const char *emojimenucmd[] = {"sh", "-c", "dmenu-emoji | dmenu -i -l 10 | awk '{print $1}' | tr -d '\n' | xclip -selection clipboard",
-                                     NULL};
-static const char *bwmenucmd[] = {"dmenu_bw", NULL};
+static const char *dmenucmd[] = {"rofi", "-show", "run", dmenumon, NULL};
+static const char *clipmenucmd[] = {
+    "rofi",    "-modi",     "\"clipboard:greenclip print\"",
+    "-show",   "clipboard", "-run-command",
+    "\'{cmd}\'", NULL};
+static const char *emojimenucmd[] = {"rofi",  "-modi", "emoji",
+                                     "-show", "emoji", NULL};
+static const char *bwmenucmd[] = {"rofi-rbw", NULL};
 static const char *networkmenucmd[] = {"networkmanager_dmenu", NULL};
 static const char *termcmd[] = {"kitty", "tmux", NULL};
+static const char *calccmd[] = {"rofi", "-show", "calc", "-modi", "calc", NULL};
 
 static const Key keys[] = {
     /* modifier                     key        function        argument */
@@ -108,6 +119,7 @@ static const Key keys[] = {
     {MODKEY, XK_e, spawn, {.v = emojimenucmd}},
     {MODKEY, XK_w, spawn, {.v = bwmenucmd}},
     {MODKEY, XK_n, spawn, {.v = networkmenucmd}},
+    {MODKEY, XK_c, spawn, {.v = calccmd}},
     {MODKEY | ShiftMask, XK_Return, spawn, {.v = termcmd}},
     {MODKEY, XK_b, togglebar, {0}},
     {MODKEY, XK_j, focusstack, {.i = +1}},
@@ -130,11 +142,18 @@ static const Key keys[] = {
     {MODKEY, XK_period, focusmon, {.i = +1}},
     {MODKEY | ShiftMask, XK_comma, tagmon, {.i = -1}},
     {MODKEY | ShiftMask, XK_period, tagmon, {.i = +1}},
+    {MODKEY, XK_KP_Subtract, setgaps, {.i = -1}},
+    {MODKEY, XK_KP_Add, setgaps, {.i = +1}},
+    {MODKEY, XK_KP_Enter, setgaps, {.i = 0}},
     {MODKEY | ShiftMask, XK_q, quit, {0}},
     {MODKEY | ControlMask | ShiftMask, XK_q, quit, {1}},
+    {0, XK_Print, spawn,
+     SHCMD("maim -s | xclip -selection clipboard -t image/png")},
     {0, XF86XK_AudioLowerVolume, spawn, {.v = downvol}},
     {0, XF86XK_AudioMute, spawn, {.v = mutevol}},
     {0, XF86XK_AudioRaiseVolume, spawn, {.v = upvol}},
+    {0, XF86XK_MonBrightnessUp, spawn, {.v = upbright}},
+    {0, XF86XK_MonBrightnessDown, spawn, {.v = downbright}},
     TAGKEYS(XK_1, 0) TAGKEYS(XK_2, 1) TAGKEYS(XK_3, 2) TAGKEYS(XK_4, 3)
         TAGKEYS(XK_5, 4) TAGKEYS(XK_6, 5) TAGKEYS(XK_7, 6) TAGKEYS(XK_8, 7)
             TAGKEYS(XK_9, 8)};
@@ -158,3 +177,20 @@ static const Button buttons[] = {
     {ClkTagBar, MODKEY, Button1, tag, {0}},
     {ClkTagBar, MODKEY, Button3, toggletag, {0}},
 };
+
+static const char *ipcsockpath = "/tmp/dwm.sock";
+static IPCCommand ipccommands[] = {
+    IPCCOMMAND(view, 1, {ARG_TYPE_UINT}),
+    IPCCOMMAND(toggleview, 1, {ARG_TYPE_UINT}),
+    IPCCOMMAND(tag, 1, {ARG_TYPE_UINT}),
+    IPCCOMMAND(toggletag, 1, {ARG_TYPE_UINT}),
+    IPCCOMMAND(tagmon, 1, {ARG_TYPE_UINT}),
+    IPCCOMMAND(focusmon, 1, {ARG_TYPE_SINT}),
+    IPCCOMMAND(focusstack, 1, {ARG_TYPE_SINT}),
+    IPCCOMMAND(zoom, 1, {ARG_TYPE_NONE}),
+    IPCCOMMAND(incnmaster, 1, {ARG_TYPE_SINT}),
+    IPCCOMMAND(killclient, 1, {ARG_TYPE_SINT}),
+    IPCCOMMAND(togglefloating, 1, {ARG_TYPE_NONE}),
+    IPCCOMMAND(setmfact, 1, {ARG_TYPE_FLOAT}),
+    IPCCOMMAND(setlayoutsafe, 1, {ARG_TYPE_PTR}),
+    IPCCOMMAND(quit, 1, {ARG_TYPE_NONE})};
