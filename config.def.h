@@ -100,7 +100,8 @@ static const char *downbright[] = {"bright_notifs.sh", "down", NULL};
 /* commands */
 static char dmenumon[2] =
     "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = {"rofi", "-show", "run", dmenumon, NULL};
+static const char *dmenucmd[] = {"rofi-launcher", NULL};
+static const char *powermenucmd[] = {"rofi-powermenu", NULL};
 static const char *clipmenucmd[] = {
     "rofi",    "-modi",     "\"clipboard:greenclip print\"",
     "-show",   "clipboard", "-run-command",
@@ -115,6 +116,7 @@ static const char *calccmd[] = {"rofi", "-show", "calc", "-modi", "calc", NULL};
 static const Key keys[] = {
     /* modifier                     key        function        argument */
     {MODKEY, XK_p, spawn, {.v = dmenucmd}},
+    {MODKEY, XK_x, spawn, {.v = powermenucmd}},
     {MODKEY, XK_v, spawn, {.v = clipmenucmd}},
     {MODKEY, XK_e, spawn, {.v = emojimenucmd}},
     {MODKEY, XK_w, spawn, {.v = bwmenucmd}},
