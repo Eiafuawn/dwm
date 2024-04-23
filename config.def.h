@@ -90,8 +90,8 @@ static const Layout layouts[] = {
 static const char *upvol[] = {"vol_notifs.sh", "5%+", NULL};
 static const char *downvol[] = {"vol_notifs.sh", "5%-", NULL};
 static const char *mutevol[] = {"vol_notifs.sh", "0", NULL};
-static const char *upbright[] = {"bright_notifs.sh", "up", NULL};
-static const char *downbright[] = {"bright_notifs.sh", "down", NULL};
+static const char *upbright[] = {"bright_notifs", "+", NULL};
+static const char *downbright[] = {"bright_notifs", "-", NULL};
 
 #define SHCMD(cmd)                                                             \
   {                                                                            \
